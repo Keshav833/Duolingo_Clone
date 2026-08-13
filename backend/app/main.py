@@ -13,6 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
 from .routes import user as user_routes
 from .routes import course as course_routes
+from .routes import lessons as lessons_routes
+from app.routes import answer 
 
 # Ensures tables exist on startup. Unlike seed.py, this does NOT drop
 # existing data — create_all() only creates tables that don't already
@@ -35,7 +37,8 @@ app.add_middleware(
 
 app.include_router(user_routes.router)
 app.include_router(course_routes.router)
-
+app.include_router(lessons_routes.router)
+app.include_router(answer.router)
 
 @app.get("/")
 def root():
