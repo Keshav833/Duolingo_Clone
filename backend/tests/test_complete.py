@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -172,7 +172,7 @@ def test_xp_equals_lesson_reward():
 
 
 def test_same_day_completion_does_not_increase_streak():
-    today_dt = datetime.utcnow()
+    today_dt = datetime.now(UTC)
     skill_id = _skill_id_for_lesson(3)
     with _clean_skill_state(skill_id):
         _set_stats(streak=5, last_activity_date=today_dt)
@@ -181,7 +181,7 @@ def test_same_day_completion_does_not_increase_streak():
 
 
 def test_yesterday_to_today_increments_streak():
-    yesterday_dt = datetime.utcnow() - timedelta(days=1)
+    yesterday_dt = datetime.now(UTC) - timedelta(days=1)
     skill_id = _skill_id_for_lesson(4)
     with _clean_skill_state(skill_id):
         _set_stats(streak=5, last_activity_date=yesterday_dt)
@@ -190,7 +190,7 @@ def test_yesterday_to_today_increments_streak():
 
 
 def test_gap_of_more_than_one_day_resets_streak():
-    old_dt = datetime.utcnow() - timedelta(days=3)
+    old_dt = datetime.now(UTC) - timedelta(days=3)
     skill_id = _skill_id_for_lesson(5)
     with _clean_skill_state(skill_id):
         _set_stats(streak=8, last_activity_date=old_dt)

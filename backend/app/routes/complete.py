@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -104,7 +104,7 @@ def complete_lesson(
         )
 
     # --- First completion ---
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     today = now.date()
 
     if progress is None:
