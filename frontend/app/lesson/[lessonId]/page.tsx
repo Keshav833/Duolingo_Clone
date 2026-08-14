@@ -192,7 +192,7 @@ export default function LessonPage() {
         <p className="text-3xl">💔</p>
         <h2 className="text-2xl font-bold text-slate-900">Out of hearts</h2>
         <p className="text-center text-slate-500">
-          You've run out of hearts for this lesson. Come back later to try again.
+          You&apos;ve run out of hearts for this lesson. Come back later to try again.
         </p>
         <Link
           href="/"
@@ -290,10 +290,10 @@ export default function LessonPage() {
   const canCheck = isAnswerValid(currentExercise, answer) && !submitting;
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-sm font-semibold text-slate-500 hover:text-slate-700">
+    <main className="min-h-screen bg-[#f7f7f7]">
+      <header className="border-b-2 border-slate-100 bg-white">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
+          <Link href="/" className="rounded-xl px-3 py-2 text-sm font-extrabold uppercase text-slate-500 hover:bg-slate-50">
             ✕ Exit
           </Link>
 
@@ -303,14 +303,14 @@ export default function LessonPage() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-3xl px-6 py-10">
+      <section className="mx-auto max-w-3xl px-6 py-12">
         <div className="mb-6">
-          <p className="mb-2 text-sm font-semibold text-slate-500">
+          <p className="mb-3 text-sm font-extrabold uppercase tracking-wide text-slate-500">
             Lesson {lesson.order} · Exercise {currentIndex + 1} of {total}
           </p>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+          <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200">
             <div
-              className="h-full rounded-full bg-green-500 transition-all"
+              className="h-full rounded-full bg-[#58cc02] transition-all"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -328,10 +328,10 @@ export default function LessonPage() {
 
         {feedback && (
           <div
-            className={`mt-4 rounded-xl border p-4 ${
+            className={`mt-5 rounded-2xl border-2 p-5 ${
               feedback.correct
-                ? "border-green-300 bg-green-50 text-green-800"
-                : "border-red-300 bg-red-50 text-red-800"
+                ? "border-[#a5e973] bg-[#efffdc] text-[#46a302]"
+                : "border-[#ffb3b3] bg-[#fff0f0] text-[#e53935]"
             }`}
           >
             <p className="font-bold">
@@ -351,12 +351,12 @@ export default function LessonPage() {
           </p>
         )}
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-8 flex justify-end">
           {feedback === null && (
             <button
               onClick={handleCheck}
               disabled={!canCheck}
-              className="rounded-xl bg-green-600 px-6 py-2 font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-2xl bg-[#58cc02] px-8 py-4 font-extrabold uppercase tracking-wide text-white shadow-[0_4px_0_#46a302] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {submitting ? "Checking..." : "Check"}
             </button>
@@ -365,7 +365,7 @@ export default function LessonPage() {
           {feedback !== null && feedback.correct && (
             <button
               onClick={handleContinue}
-              className="rounded-xl bg-green-600 px-6 py-2 font-semibold text-white hover:bg-green-700"
+              className="rounded-2xl bg-[#58cc02] px-8 py-4 font-extrabold uppercase tracking-wide text-white shadow-[0_4px_0_#46a302]"
             >
               Continue
             </button>
@@ -374,7 +374,7 @@ export default function LessonPage() {
           {feedback !== null && !feedback.correct && !outOfHearts && (
             <button
               onClick={handleRetry}
-              className="rounded-xl bg-red-600 px-6 py-2 font-semibold text-white hover:bg-red-700"
+              className="rounded-2xl bg-[#ff4b4b] px-8 py-4 font-extrabold uppercase tracking-wide text-white shadow-[0_4px_0_#d93c3c]"
             >
               Try Again
             </button>

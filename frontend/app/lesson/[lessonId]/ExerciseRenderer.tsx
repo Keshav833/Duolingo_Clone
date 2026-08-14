@@ -23,8 +23,8 @@ export default function ExerciseRenderer({
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
   return (
-    <div className="rounded-2xl border bg-white p-6 shadow-sm">
-      <p className="mb-6 text-xl font-bold text-slate-900">
+    <div className="rounded-3xl border-2 border-slate-200 bg-white p-6 sm:p-9">
+      <p className="mb-8 text-2xl font-black text-slate-700">
         {exercise.question}
       </p>
 
@@ -37,8 +37,8 @@ export default function ExerciseRenderer({
               onClick={() => onAnswerChange(choice)}
               className={`block w-full rounded-xl border p-3 text-left font-medium disabled:opacity-60 ${
                 answer === choice
-                  ? "border-green-500 bg-green-50 text-green-700"
-                  : "border-slate-200 hover:border-slate-300"
+                  ? "border-[#1cb0f6] bg-[#e9f8ff] text-[#168ac2]"
+                  : "border-2 border-slate-200 hover:border-[#84d8ff]"
               }`}
             >
               {choice}
@@ -49,7 +49,7 @@ export default function ExerciseRenderer({
 
       {exercise.type === "translate" && exercise.options && (
         <div>
-          <div className="mb-4 flex min-h-[3rem] flex-wrap gap-2 rounded-xl border border-dashed border-slate-300 p-3">
+          <div className="mb-5 flex min-h-[4rem] flex-wrap gap-2 rounded-2xl border-2 border-dashed border-slate-300 p-4">
             {selectedIndices.length === 0 && (
               <span className="text-sm text-slate-400">Tap words below</span>
             )}
@@ -62,7 +62,7 @@ export default function ExerciseRenderer({
                   setSelectedIndices(next);
                   onAnswerChange(next.map((i) => exercise.options!.word_bank[i]));
                 }}
-                className="rounded-lg bg-green-100 px-3 py-1 font-medium text-green-800 disabled:opacity-60"
+                className="rounded-xl bg-[#ddf4ff] px-4 py-2 font-bold text-[#168ac2] disabled:opacity-60"
               >
                 {exercise.options!.word_bank[idx]}
               </button>
@@ -80,7 +80,7 @@ export default function ExerciseRenderer({
                     setSelectedIndices(next);
                     onAnswerChange(next.map((i) => exercise.options!.word_bank[i]));
                   }}
-                  className="rounded-lg border border-slate-200 px-3 py-1 font-medium hover:border-slate-300 disabled:opacity-60"
+                  className="rounded-xl border-2 border-slate-200 px-4 py-2 font-bold shadow-[0_2px_0_#d5d9dc] hover:border-[#84d8ff] disabled:opacity-60"
                 >
                   {word}
                 </button>
@@ -103,10 +103,8 @@ export default function ExerciseRenderer({
                   onClick={() => setSelectedLeft(left)}
                   className={`block w-full rounded-xl border p-3 text-left font-medium disabled:opacity-60 ${
                     isMatched
-                      ? "border-green-500 bg-green-50 text-green-700"
-                      : selectedLeft === left
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? "border-[#58cc02] bg-[#efffdc] text-[#46a302]"
+                      : selectedLeft === left ? "border-[#1cb0f6] bg-[#e9f8ff]" : "border-slate-200 hover:border-[#84d8ff]"
                   }`}
                 >
                   {left}
@@ -130,8 +128,7 @@ export default function ExerciseRenderer({
                   }}
                   className={`block w-full rounded-xl border p-3 text-left font-medium disabled:opacity-60 ${
                     alreadyMatched
-                      ? "border-green-500 bg-green-50 text-green-700"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? "border-[#58cc02] bg-[#efffdc] text-[#46a302]" : "border-slate-200 hover:border-[#84d8ff]"
                   }`}
                 >
                   {right}
@@ -149,7 +146,7 @@ export default function ExerciseRenderer({
           value={(answer as string) ?? ""}
           onChange={(e) => onAnswerChange(e.target.value)}
           placeholder="Type your answer"
-          className="w-full rounded-xl border border-slate-200 p-3 font-medium focus:border-green-500 focus:outline-none disabled:opacity-60"
+          className="w-full rounded-2xl border-2 border-slate-200 p-4 text-lg font-bold focus:border-[#1cb0f6] focus:outline-none disabled:opacity-60"
         />
       )}
     </div>

@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #3c3c3c;
 }
 
 @theme inline {
@@ -12,15 +12,37 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Duolingo-style tactile controls: buttons lift at rest and press into the
+   page while clicked. The rule is global so every existing exercise, modal,
+   and action button gets consistent feedback without changing its behavior. */
+button:not(:disabled) {
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+
+button:not(:disabled):hover {
+  filter: brightness(1.03);
+}
+
+button:not(:disabled):active {
+  transform: translateY(4px) scale(0.985);
+  filter: brightness(0.96);
+  box-shadow: none !important;
+}
+
+button:focus-visible {
+  outline: 3px solid #84d8ff;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled) {
+    transition: none;
+  }
 }
