@@ -1,11 +1,14 @@
 # backend/app/routes/answer.py
 
+from datetime import datetime, UTC
+from typing import Union, List, Dict, Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import Union, List, Dict, Any
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.hearts import apply_heart_regen
 from app.models import Exercise, Lesson, UserStats, User, ExerciseType
 from app.schemas.answer import AnswerSubmitRequest, AnswerSubmitResponse
 
@@ -86,12 +89,25 @@ def submit_answer(
         # silently 500-ing on stats.hearts below.
         raise HTTPException(status_code=404, detail="User stats not found")
 
+    # Apply regen before deciding correctness/decrementing, so a stale 0
+    # (or any under-max value) reflects elapsed time first.
+    apply_heart_regen(stats)
+
     correct = _is_correct(exercise, payload.submitted_answer)
 
     if not correct:
         stats.hearts = max(0, stats.hearts - 1)
-        db.commit()
-        db.refresh(stats)
+        # Only start the countdown on the FIRST heart lost from a
+        # non-pending state. If last_heart_lost_at is already set, a
+        # further wrong answer must not push the timer back.
+        if stats.last_heart_lost_at is None:
+            stats.last_heart_lost_at = datetime.now(UTC)
+
+    # Commit unconditionally: even a correct answer may have triggered
+    # regen above (e.g. hearts went 0 -> 1 from elapsed time), and that
+    # mutation needs to persist regardless of this answer's outcome.
+    db.commit()
+    db.refresh(stats)
 
     return AnswerSubmitResponse(
         correct=correct,
