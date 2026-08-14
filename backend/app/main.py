@@ -29,8 +29,10 @@ app = FastAPI(title="Duolingo Clone API")
 # so it's easy to miss until you wire up the actual frontend.
 app.add_middleware(
     CORSMiddleware,
-    "http://localhost:3000",
-    "https://duolingo-clone-ma82.vercel.app",
+     allow_origins=[
+        "http://localhost:3000",
+        "https://duolingo-clone-ma82.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
