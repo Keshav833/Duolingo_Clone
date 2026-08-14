@@ -14,11 +14,8 @@ from .database import Base, engine
 from .routes import user as user_routes
 from .routes import course as course_routes
 from .routes import lessons as lessons_routes
-from app.routes import answer 
-from app.routes import complete
-from app.routes import profile
-from app.routes import leaderboard
-from app.routes import skills
+from .routes import answer as answer_routes
+
 # Ensures tables exist on startup. Unlike seed.py, this does NOT drop
 # existing data — create_all() only creates tables that don't already
 # exist, so it's safe to run every time the server starts.
@@ -33,6 +30,7 @@ app = FastAPI(title="Duolingo Clone API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
+    allow_origin_regex=r"https://duolingo-clone.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,11 +39,9 @@ app.add_middleware(
 app.include_router(user_routes.router)
 app.include_router(course_routes.router)
 app.include_router(lessons_routes.router)
-app.include_router(answer.router)
-app.include_router(complete.router)
-app.include_router(profile.router)
-app.include_router(leaderboard.router)
-app.include_router(skills.router)
+app.include_router(answer_routes.router)
+
+
 @app.get("/")
 def root():
     return {"status": "ok", "service": "duolingo-clone-api"}
