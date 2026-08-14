@@ -200,6 +200,15 @@ COURSE = {
     ],
 }
 
+# Additional users that exist only for the leaderboard to have real
+# competitors to rank against Keshav — see seed() for why they get no
+# course progress rows.
+OTHER_USERS = [
+    {"username": "Aarav", "xp_total": 450},
+    {"username": "Priya", "xp_total": 320},
+    {"username": "Rahul", "xp_total": 180},
+]
+
 
 def seed():
     print("Dropping and recreating all tables...")
@@ -249,41 +258,58 @@ def seed():
         db.add(
             UserStats(
                 user_id=user.id,
-                xp_total=120,
-                streak_count=3,
-                last_activity_date=datetime.utcnow() - timedelta(hours=2),
+                xp_total=0,
+                streak_count=0,
                 hearts=5,
                 hearts_max=5,
                 daily_xp_goal=30,
-                daily_xp_earned=20,
+                daily_xp_earned=0,
             )
         )
 
         # skill_objs is in seed order: [Greetings, Introductions, Food, Family]
         greetings, introductions, food, family = skill_objs
 
-        db.add(UserSkillProgress(user_id=user.id, skill_id=greetings.id, status=SkillStatus.completed, crowns=2, lessons_completed=2))
-        db.add(UserSkillProgress(user_id=user.id, skill_id=introductions.id, status=SkillStatus.available, crowns=0, lessons_completed=0))
+        db.add(UserSkillProgress(
+            user_id=user.id,
+            skill_id=greetings.id,
+            status=SkillStatus.available,
+            crowns=0,
+            lessons_completed=0,
+        ))
+
+        db.add(UserSkillProgress(
+            user_id=user.id,
+            skill_id=introductions.id,
+            status=SkillStatus.locked,
+            crowns=0,
+            lessons_completed=0
+        ))
         db.add(UserSkillProgress(user_id=user.id, skill_id=food.id, status=SkillStatus.locked, crowns=0, lessons_completed=0))
         db.add(UserSkillProgress(user_id=user.id, skill_id=family.id, status=SkillStatus.locked, crowns=0, lessons_completed=0))
 
-        # lesson progress rows for the 2 completed Greetings lessons
-        for lesson in greetings.lessons:
+        # (Removed: lesson progress rows for the 2 completed Greetings lessons)
+
+        # ---------- additional seeded users (leaderboard only) ----------
+        for other in OTHER_USERS:
+            other_user = User(username=other["username"])
+            db.add(other_user)
+            db.flush()
             db.add(
-                UserLessonProgress(
-                    user_id=user.id,
-                    lesson_id=lesson.id,
-                    completed=True,
-                    xp_earned=lesson.xp_reward,
-                    accuracy=100.0,
-                    completed_at=datetime.utcnow() - timedelta(hours=2),
+                UserStats(
+                    user_id=other_user.id,
+                    xp_total=other["xp_total"]
                 )
             )
 
         db.commit()
 
         exercise_count = db.query(Exercise).count()
-        print(f"Seeded: 1 course, 2 units, 4 skills, 8 lessons, {exercise_count} exercises, 1 user.")
+        user_count = db.query(User).count()
+        print(
+            f"Seeded: 1 course, 2 units, 4 skills, 8 lessons, "
+            f"{exercise_count} exercises, {user_count} users."
+        )
 
     except Exception:
         db.rollback()

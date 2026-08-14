@@ -1,10 +1,11 @@
 """
 Tests for GET /api/leaderboard.
 
-Read-only route -> no state cleanup needed. With one seeded user this is a
-one-entry leaderboard, which the assignment explicitly says is valid -- the
-"ordered by XP descending" check is written to hold for any number of
-entries, not just one, so it stays correct if more users are ever seeded.
+Read-only route -> no state cleanup needed. Seed data now includes four
+users (Keshav + 3 others) so these tests exercise real multi-user ranking,
+not just the single-entry case. The ordering/rank-sequencing checks are
+written generically against len(entries), so they hold regardless of how
+many users are seeded.
 """
 
 from fastapi.testclient import TestClient
@@ -46,3 +47,14 @@ def test_existing_routes_still_work():
     assert client.get("/api/me").status_code == 200
     assert client.get("/api/course").status_code == 200
     assert client.get("/api/lessons/1").status_code == 200
+
+
+def test_leaderboard_has_multiple_seeded_users():
+    entries = client.get("/api/leaderboard").json()["entries"]
+    assert len(entries) > 1
+
+
+def test_all_seeded_usernames_present():
+    entries = client.get("/api/leaderboard").json()["entries"]
+    usernames = {e["username"] for e in entries}
+    assert {"Keshav", "Aarav", "Priya", "Rahul"}.issubset(usernames)

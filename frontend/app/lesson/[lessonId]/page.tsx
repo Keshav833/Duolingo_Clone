@@ -188,6 +188,21 @@ export default function LessonPage() {
   // to /complete. Only way out is back to the dashboard. ---
   if (outOfHearts) {
     return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-6 py-10">
+        <section className="w-full max-w-md rounded-3xl border-2 border-slate-200 bg-white p-8 text-center shadow-[0_8px_0_#d5d9dc]">
+          <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-[#fff0f0]">
+            <svg viewBox="0 0 24 24" className="h-11 w-11 text-[#ff4b4b]" aria-hidden="true"><path d="M12 20.5 4.5 13C1.7 10.2 2.3 5.5 6.2 4.3c2-.6 4.2.1 5.8 2 1.6-1.9 3.8-2.6 5.8-2C21.7 5.5 22.3 10.2 19.5 13Z" fill="currentColor" /></svg>
+          </div>
+          <h2 className="mt-5 text-3xl font-black text-slate-700">Out of hearts</h2>
+          <p className="mt-3 leading-relaxed text-slate-500">You&apos;ve run out of hearts for this lesson. Take a break and come back later to try again.</p>
+          <Link href="/" className="mt-7 block rounded-2xl bg-[#58cc02] px-7 py-4 font-extrabold uppercase tracking-wide text-white shadow-[0_4px_0_#46a302]">Back to dashboard</Link>
+        </section>
+      </main>
+    );
+  }
+
+  if (outOfHearts) {
+    return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#f7f7f7] px-6 py-10">
         <p className="text-3xl">💔</p>
         <h2 className="text-2xl font-bold text-slate-900">Out of hearts</h2>
