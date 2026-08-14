@@ -41,6 +41,42 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
+.lesson-exit {
+  font-size: 0;
+}
+
+.lesson-exit::before {
+  content: "×";
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.completion-card > p:first-child {
+  display: none;
+}
+
+.lesson-exit::before {
+  content: "\00d7";
+}
+
+.completion-card {
+  box-shadow: 0 8px 0 #d5d9dc;
+}
+
+.completion-card .flex.justify-between {
+  align-items: center;
+  border-radius: 14px;
+  background: #f7f7f7;
+  padding: 12px 14px;
+}
+
+.completion-card .flex.justify-between span:last-child {
+  color: #168ac2;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
 @media (prefers-reduced-motion: reduce) {
   button:not(:disabled) {
     transition: none;

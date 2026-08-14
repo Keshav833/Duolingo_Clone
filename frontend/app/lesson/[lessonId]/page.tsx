@@ -188,7 +188,7 @@ export default function LessonPage() {
   // to /complete. Only way out is back to the dashboard. ---
   if (outOfHearts) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#f7f7f7] px-6 py-10">
         <p className="text-3xl">💔</p>
         <h2 className="text-2xl font-bold text-slate-900">Out of hearts</h2>
         <p className="text-center text-slate-500">
@@ -209,7 +209,7 @@ export default function LessonPage() {
   if (completing || completionResult || completionError) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6">
-        {completing && <p>Completing lesson...</p>}
+        {completing && <div className="rounded-3xl border-2 border-slate-200 bg-white px-8 py-6 text-center shadow-sm"><div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#d7ffb8] border-t-[#58cc02]" /><p className="font-extrabold text-slate-600">Saving your progress...</p></div>}
 
         {completionError && !completing && (
           <>
@@ -227,13 +227,15 @@ export default function LessonPage() {
         )}
 
         {completionResult && !completing && (
-          <div className="w-full max-w-sm rounded-2xl border bg-white p-6 text-center shadow-sm">
+          <div className="completion-card w-full max-w-md rounded-3xl border-2 border-slate-200 bg-white p-7 text-center shadow-sm">
             <p className="mb-2 text-3xl">🎉</p>
-            <h2 className="mb-4 text-2xl font-bold text-slate-900">
+            <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full bg-[#efffdc]"><svg viewBox="0 0 24 24" className="h-11 w-11 text-[#58cc02]" aria-hidden="true"><path d="m12 2.8 2.7 5.6 6.2.9-4.5 4.4 1.1 6.2-5.5-3-5.5 3 1.1-6.2-4.5-4.4 6.2-.9Z" fill="currentColor"/></svg></div>
+            <h2 className="mb-2 text-3xl font-black text-slate-700">
               Lesson complete!
             </h2>
 
-            <div className="space-y-2 text-left text-sm">
+            <p className="font-bold text-slate-500">Great work! Here&apos;s what you earned.</p>
+            <div className="mt-6 space-y-3 text-left text-sm">
               <p className="flex justify-between">
                 <span className="text-slate-500">XP earned</span>
                 <span className="font-bold text-slate-900">
@@ -276,7 +278,7 @@ export default function LessonPage() {
 
             <Link
               href="/"
-              className="mt-6 block rounded-xl bg-green-600 px-6 py-2 font-semibold text-white hover:bg-green-700"
+              className="mt-7 block rounded-2xl bg-[#58cc02] px-6 py-4 font-extrabold uppercase tracking-wide text-white shadow-[0_4px_0_#46a302]"
             >
               Back to Dashboard
             </Link>
@@ -293,13 +295,17 @@ export default function LessonPage() {
     <main className="min-h-screen bg-[#f7f7f7]">
       <header className="border-b-2 border-slate-100 bg-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
-          <Link href="/" className="rounded-xl px-3 py-2 text-sm font-extrabold uppercase text-slate-500 hover:bg-slate-50">
+          <Link href="/" aria-label="Exit lesson" className="lesson-exit grid h-11 w-11 place-items-center rounded-2xl border-2 border-slate-200 text-slate-500 hover:border-[#ffb3b3] hover:bg-[#fff0f0] hover:text-[#ff4b4b]">
             ✕ Exit
           </Link>
 
-          <span className="text-sm font-semibold">
+          <span className="hidden text-sm font-semibold">
             ❤️ {hearts}/{user.stats.hearts_max}
           </span>
+          <div className="flex items-center gap-2 rounded-2xl bg-[#fff0f0] px-4 py-2 font-extrabold text-[#ff4b4b]">
+            <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden="true"><path d="M12 20.5 4.5 13C1.7 10.2 2.3 5.5 6.2 4.3c2-.6 4.2.1 5.8 2 1.6-1.9 3.8-2.6 5.8-2C21.7 5.5 22.3 10.2 19.5 13Z" fill="currentColor" /></svg>
+            <span>{hearts}/{user.stats.hearts_max}</span>
+          </div>
         </div>
       </header>
 
