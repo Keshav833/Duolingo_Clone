@@ -2,9 +2,6 @@
 
 A full-stack clone of Duolingo's core learning loop, built for the Scaler AI Labs Software Engineering Intern assignment.
 
-**GitHub:** _add your repo link here_
-**Live demo:** _add your deployment link here_
-
 ---
 
 ## Overview
