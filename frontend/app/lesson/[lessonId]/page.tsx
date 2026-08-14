@@ -1,0 +1,386 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { apiFetch } from "@/lib/api";
+import type {
+  Lesson,
+  User,
+  SubmittedAnswer,
+  AnswerSubmitResponse,
+  CompleteLessonResponse,
+  Exercise,
+} from "@/lib/types";
+import ExerciseRenderer from "./ExerciseRenderer";
+
+function isAnswerValid(exercise: Exercise, answer: SubmittedAnswer | null): boolean {
+  if (answer === null) return false;
+
+  switch (exercise.type) {
+    case "multiple_choice":
+      return typeof answer === "string" && answer.length > 0;
+    case "translate":
+      return Array.isArray(answer) && answer.length > 0;
+    case "match_pairs": {
+      if (typeof answer !== "object" || Array.isArray(answer)) return false;
+      const pairCount = exercise.options?.pairs.length ?? 0;
+      return pairCount > 0 && Object.keys(answer).length === pairCount;
+    }
+    case "fill_blank":
+    case "type_answer":
+      return typeof answer === "string" && answer.trim().length > 0;
+    default:
+      return false;
+  }
+}
+
+function formatCorrectAnswer(value: SubmittedAnswer): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.join(" ");
+  return Object.entries(value)
+    .map(([k, v]) => `${k} → ${v}`)
+    .join(", ");
+}
+
+export default function LessonPage() {
+  const params = useParams<{ lessonId: string }>();
+  const lessonId = params.lessonId;
+
+  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answer, setAnswer] = useState<SubmittedAnswer | null>(null);
+  const [feedback, setFeedback] = useState<AnswerSubmitResponse | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [hearts, setHearts] = useState<number | null>(null);
+
+  const [completing, setCompleting] = useState(false);
+  const [completionResult, setCompletionResult] =
+    useState<CompleteLessonResponse | null>(null);
+  const [completionError, setCompletionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadLesson() {
+      try {
+        const [lessonData, userData] = await Promise.all([
+          apiFetch<Lesson>(`/api/lessons/${lessonId}`),
+          apiFetch<User>("/api/me"),
+        ]);
+        setLesson(lessonData);
+        setUser(userData);
+        setHearts(userData.stats.hearts);
+      } catch (err) {
+        console.error(err);
+        setLoadError("Could not load this lesson.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadLesson();
+  }, [lessonId]);
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p>Loading...</p>
+      </main>
+    );
+  }
+
+  if (loadError || !lesson || !user || hearts === null) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4">
+        <p>{loadError ?? "Something went wrong."}</p>
+        <Link href="/" className="font-semibold text-green-600">
+          Back to Dashboard
+        </Link>
+      </main>
+    );
+  }
+
+  const total = lesson.exercises.length;
+  const currentExercise = lesson.exercises[currentIndex];
+  const isLastExercise = currentIndex >= total - 1;
+
+  // Authoritative failure condition: backend said this answer was wrong
+  // AND the backend's own returned hearts value is 0. Nothing else can
+  // derive "out of hearts" — never computed client-side from a counter.
+  const outOfHearts = feedback !== null && !feedback.correct && hearts === 0;
+
+  async function handleCheck() {
+    if (!currentExercise || answer === null || submitting) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const result = await apiFetch<AnswerSubmitResponse>(
+        `/api/lessons/${lessonId}/answer`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            exercise_id: currentExercise.id,
+            submitted_answer: answer,
+          }),
+        }
+      );
+      setFeedback(result);
+      setHearts(result.hearts);
+    } catch (err) {
+      console.error(err);
+      setSubmitError("Could not submit your answer. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleCompleteLesson() {
+    if (completing || completionResult) return; // guards duplicate completion calls
+
+    setCompleting(true);
+    setCompletionError(null);
+
+    try {
+      const result = await apiFetch<CompleteLessonResponse>(
+        `/api/lessons/${lessonId}/complete`,
+        { method: "POST" }
+      );
+      setCompletionResult(result);
+    } catch (err) {
+      console.error(err);
+      setCompletionError("Could not complete this lesson. Try again.");
+    } finally {
+      setCompleting(false);
+    }
+  }
+
+  function handleContinue() {
+    // Correct-only path. Wrong answers never reach this handler — the
+    // button that calls it renders "Try Again" and calls handleRetry
+    // instead whenever feedback.correct is false (see render below).
+    if (!feedback || !feedback.correct) return;
+
+    if (isLastExercise) {
+      handleCompleteLesson();
+      return;
+    }
+
+    setCurrentIndex((i) => i + 1);
+    setAnswer(null);
+    setFeedback(null);
+    setSubmitError(null);
+  }
+
+  function handleRetry() {
+    // Resets the CURRENT exercise only. Never advances currentIndex.
+    setAnswer(null);
+    setFeedback(null);
+    setSubmitError(null);
+  }
+
+  // --- Out-of-hearts failure screen: no Continue, no Try Again, no path
+  // to /complete. Only way out is back to the dashboard. ---
+  if (outOfHearts) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6">
+        <p className="text-3xl">💔</p>
+        <h2 className="text-2xl font-bold text-slate-900">Out of hearts</h2>
+        <p className="text-center text-slate-500">
+          You've run out of hearts for this lesson. Come back later to try again.
+        </p>
+        <Link
+          href="/"
+          className="mt-2 rounded-xl bg-green-600 px-6 py-2 font-semibold text-white hover:bg-green-700"
+        >
+          Back to Dashboard
+        </Link>
+      </main>
+    );
+  }
+
+  // --- Completion screen (only reachable after a real /complete call,
+  // which only ever fires from handleContinue on a correct final answer) ---
+  if (completing || completionResult || completionError) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6">
+        {completing && <p>Completing lesson...</p>}
+
+        {completionError && !completing && (
+          <>
+            <p className="font-semibold text-red-600">{completionError}</p>
+            <button
+              onClick={handleCompleteLesson}
+              className="rounded-xl bg-green-600 px-6 py-2 font-semibold text-white hover:bg-green-700"
+            >
+              Retry
+            </button>
+            <Link href="/" className="font-semibold text-slate-500">
+              Back to Dashboard
+            </Link>
+          </>
+        )}
+
+        {completionResult && !completing && (
+          <div className="w-full max-w-sm rounded-2xl border bg-white p-6 text-center shadow-sm">
+            <p className="mb-2 text-3xl">🎉</p>
+            <h2 className="mb-4 text-2xl font-bold text-slate-900">
+              Lesson complete!
+            </h2>
+
+            <div className="space-y-2 text-left text-sm">
+              <p className="flex justify-between">
+                <span className="text-slate-500">XP earned</span>
+                <span className="font-bold text-slate-900">
+                  {completionResult.already_completed
+                    ? "0 (already completed)"
+                    : `+${completionResult.xp_earned}`}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-slate-500">Total XP</span>
+                <span className="font-bold text-slate-900">
+                  {completionResult.total_xp}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-slate-500">Streak</span>
+                <span className="font-bold text-slate-900">
+                  🔥 {completionResult.streak}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-slate-500">Skill progress</span>
+                <span className="font-bold text-slate-900">
+                  {completionResult.skill.lessons_completed} lessons ·{" "}
+                  {"👑".repeat(completionResult.skill.crowns)}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-slate-500">Skill status</span>
+                <span className="font-bold capitalize text-slate-900">
+                  {completionResult.skill.status}
+                </span>
+              </p>
+              {completionResult.unlocked_skill_id !== null && (
+                <p className="mt-2 rounded-lg bg-green-50 p-2 text-center font-semibold text-green-700">
+                  🔓 New skill unlocked!
+                </p>
+              )}
+            </div>
+
+            <Link
+              href="/"
+              className="mt-6 block rounded-xl bg-green-600 px-6 py-2 font-semibold text-white hover:bg-green-700"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  const progressPct = total > 0 ? ((currentIndex + 1) / total) * 100 : 0;
+  const canCheck = isAnswerValid(currentExercise, answer) && !submitting;
+
+  return (
+    <main className="min-h-screen bg-slate-50">
+      <header className="border-b bg-white">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+          <Link href="/" className="text-sm font-semibold text-slate-500 hover:text-slate-700">
+            ✕ Exit
+          </Link>
+
+          <span className="text-sm font-semibold">
+            ❤️ {hearts}/{user.stats.hearts_max}
+          </span>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-3xl px-6 py-10">
+        <div className="mb-6">
+          <p className="mb-2 text-sm font-semibold text-slate-500">
+            Lesson {lesson.order} · Exercise {currentIndex + 1} of {total}
+          </p>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+            <div
+              className="h-full rounded-full bg-green-500 transition-all"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+
+        {currentExercise && (
+          <ExerciseRenderer
+            key={currentExercise.id}
+            exercise={currentExercise}
+            answer={answer}
+            onAnswerChange={setAnswer}
+            disabled={feedback !== null}
+          />
+        )}
+
+        {feedback && (
+          <div
+            className={`mt-4 rounded-xl border p-4 ${
+              feedback.correct
+                ? "border-green-300 bg-green-50 text-green-800"
+                : "border-red-300 bg-red-50 text-red-800"
+            }`}
+          >
+            <p className="font-bold">
+              {feedback.correct ? "✓ Correct!" : "✗ Incorrect"}
+            </p>
+            {!feedback.correct && (
+              <p className="mt-1 text-sm">
+                Correct answer: {formatCorrectAnswer(feedback.correct_answer)}
+              </p>
+            )}
+          </div>
+        )}
+
+        {submitError && (
+          <p className="mt-4 text-sm font-semibold text-red-600">
+            {submitError}
+          </p>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          {feedback === null && (
+            <button
+              onClick={handleCheck}
+              disabled={!canCheck}
+              className="rounded-xl bg-green-600 px-6 py-2 font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {submitting ? "Checking..." : "Check"}
+            </button>
+          )}
+
+          {feedback !== null && feedback.correct && (
+            <button
+              onClick={handleContinue}
+              className="rounded-xl bg-green-600 px-6 py-2 font-semibold text-white hover:bg-green-700"
+            >
+              Continue
+            </button>
+          )}
+
+          {feedback !== null && !feedback.correct && !outOfHearts && (
+            <button
+              onClick={handleRetry}
+              className="rounded-xl bg-red-600 px-6 py-2 font-semibold text-white hover:bg-red-700"
+            >
+              Try Again
+            </button>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}
