@@ -42,8 +42,9 @@ def _copy_skill_progress(sp: UserSkillProgress | None) -> dict | None:
     }
 
 
+
 @contextmanager
-def _clean_skill_state(skill_id: int):
+def _clean_skill_state(skill_id: int, extra_skill_ids: list[int] | None = None):
     """
     Temporarily wipes UserSkillProgress and every UserLessonProgress row
     belonging to this skill, so a test starts from a genuinely clean slate
@@ -51,9 +52,19 @@ def _clean_skill_state(skill_id: int):
     original rows exactly, so seeded demo state -- Greetings completed,
     Introductions available, Food/Family locked -- survives the test run.
 
-    Yields the list of lesson_ids that belong to this skill, in case a test
+    extra_skill_ids: skill IDs whose UserSkillProgress row (only -- not
+    lesson progress) this test may also mutate, e.g. a progression test
+    forcing the "next skill" into a known locked state before running, or
+    complete_lesson() unlocking that next skill as a side effect. Each of
+    these rows is snapshotted before the test body runs and restored to
+    exactly that pre-test state on exit, regardless of what the test did
+    to it in between.
+
+    Yields the list of lesson_ids that belong to `skill_id`, in case a test
     needs to complete more than one of them.
     """
+    extra_skill_ids = extra_skill_ids or []
+
     db = _db()
     lesson_ids = [
         row.id for row in db.query(Lesson).filter(Lesson.skill_id == skill_id).all()
@@ -78,6 +89,18 @@ def _clean_skill_state(skill_id: int):
         .all()
     ]
 
+    saved_extra_skills = {
+        extra_id: _copy_skill_progress(
+            db.query(UserSkillProgress)
+            .filter(
+                UserSkillProgress.user_id == USER_ID,
+                UserSkillProgress.skill_id == extra_id,
+            )
+            .first()
+        )
+        for extra_id in extra_skill_ids
+    }
+
     db.query(UserLessonProgress).filter(
         UserLessonProgress.user_id == USER_ID,
         UserLessonProgress.lesson_id.in_(lesson_ids),
@@ -101,12 +124,20 @@ def _clean_skill_state(skill_id: int):
             UserSkillProgress.user_id == USER_ID,
             UserSkillProgress.skill_id == skill_id,
         ).delete(synchronize_session=False)
+        for extra_id in extra_skill_ids:
+            db.query(UserSkillProgress).filter(
+                UserSkillProgress.user_id == USER_ID,
+                UserSkillProgress.skill_id == extra_id,
+            ).delete(synchronize_session=False)
         db.commit()
 
         for data in saved_lessons:
             db.add(UserLessonProgress(**data))
         if saved_skill is not None:
             db.add(UserSkillProgress(**saved_skill))
+        for extra_id, data in saved_extra_skills.items():
+            if data is not None:
+                db.add(UserSkillProgress(**data))
         db.commit()
         db.close()
 

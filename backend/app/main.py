@@ -18,6 +18,7 @@ from app.routes import answer
 from app.routes import complete
 from app.routes import profile
 from app.routes import leaderboard
+from app.routes import skills
 # Ensures tables exist on startup. Unlike seed.py, this does NOT drop
 # existing data — create_all() only creates tables that don't already
 # exist, so it's safe to run every time the server starts.
@@ -44,7 +45,7 @@ app.include_router(answer.router)
 app.include_router(complete.router)
 app.include_router(profile.router)
 app.include_router(leaderboard.router)
-
+app.include_router(skills.router)
 @app.get("/")
 def root():
     return {"status": "ok", "service": "duolingo-clone-api"}
